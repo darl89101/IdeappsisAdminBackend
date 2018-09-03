@@ -1,6 +1,7 @@
 var express = require('express');
 var bcrypt = require('bcryptjs');
 var jwt = require('jsonwebtoken');
+var SEED = require('../config/config').SEED;
 
 var app = express();
 var Usuario = require('../models/usuario');
@@ -37,7 +38,7 @@ app.post('/', (req, res) => {
         }
         // Crear Token!!!!
         usuario.password = ':)';
-        var token = jwt.sign({ usuario: usuario }, '@este-es@-un-seed-dificil', { expiresIn: 14400 }); // 4 horas
+        var token = jwt.sign({ usuario: usuario }, SEED, { expiresIn: 14400 }); // 4 horas
 
         res.status(200).json({
             ok: true,
