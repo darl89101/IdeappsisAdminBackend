@@ -1,7 +1,6 @@
 var express = require('express');
 var app = express();
 
-var mongoose = require('mongoose');
 var Hospital = require('../models/hospital');
 var mdAutenticacion = require('../middlewares/autenticacion');
 
@@ -10,18 +9,30 @@ var mdAutenticacion = require('../middlewares/autenticacion');
 // Consultar los hospitales
 // =================================================
 app.get('/', (req, res) => {
-    Hospital.find({}, (err, hospitales) => {
-        if (err) {
-            return res.status(500).json({
-                ok: false,
-                error: err
+
+    var desde = req.query.desde || 0;
+    desde = Number(desde);
+
+    Hospital.find({})
+        .skip(desde)
+        .limit(5)
+        .populate('usuario', 'nombre email')
+        .exec((err, hospitales) => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    error: err
+                });
+            }
+            Hospital.count({}, (err, count) => {
+                res.status(200).json({
+                    ok: true,
+                    hospitales: hospitales,
+                    total: count
+                })
             });
-        }
-        res.status(200).json({
-            ok: true,
-            hospitales: hospitales
-        })
-    });
+
+        });
 });
 
 // =================================================
@@ -47,7 +58,7 @@ app.post('/', mdAutenticacion.verificaToken, (req, res) => {
         }
         res.status(201).json({
             ok: true,
-            usuario: hospital
+            hospital: hospital
                 // usuarioToken: req.usuario
         });
     })
@@ -96,5 +107,36 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
     });
 
 });
+
+// =================================================
+// Eliminar un Hospital
+// =================================================
+app.delete('/:id', mdAutenticacion.verificaToken, (req, res) => {
+    var id = req.params.id;
+
+    Hospital.findByIdAndRemove(id, (err, hospitalEliminado) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                mensaje: 'Error al Eliminar hospital',
+                errors: err
+            });
+        }
+        if (!hospitalEliminado) {
+            return res.status(404).json({
+                ok: false,
+                mensaje: `Error al consultar hospital con id ${id}`,
+                errors: {
+                    message: 'No existe un hospital con ese ID'
+                }
+            });
+        }
+        res.status(200).json({
+            ok: true,
+            hospital: hospitalEliminado
+        });
+    });
+});
+
 
 module.exports = app;
