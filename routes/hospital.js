@@ -36,6 +36,38 @@ app.get('/', (req, res) => {
 });
 
 // =================================================
+// Obtener Hospital por Id
+// =================================================
+app.get('/:id', (req, res) => {
+
+    let id = req.params.id;
+
+    Hospital.findById(id)
+        .populate('usuario', 'nombre img email')
+        .exec((err, hospital) => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    mensaje: 'Error al buscar el hospital',
+                    errors: err
+                });
+            }
+            if (!hospital) {
+                return res.status(400).json({
+                    ok: false,
+                    mensaje: 'El hospital con el id' + id + 'no existe',
+                    errors: { message: 'No existe un hospital con ese ID' }
+                });
+            }
+            res.status(200).json({
+                ok: true,
+                hospital
+            });
+        })
+
+});
+
+// =================================================
 // Crear Hospital
 // =================================================
 app.post('/', mdAutenticacion.verificaToken, (req, res) => {
