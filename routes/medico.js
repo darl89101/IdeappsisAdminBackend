@@ -36,6 +36,42 @@ app.get('/', (req, res) => {
 });
 
 // =================================================
+// Consultar medico por id
+// =================================================
+app.get('/:id', (req, res) => {
+
+    var id = req.params.id;
+
+    Medico.findById(id)
+        .populate('hospital')
+        .populate('usuario', 'nombre email img')
+        .exec((err, medico) => {
+            if (err) {
+                return res.status(500)
+                    .json({
+                        ok: false,
+                        mensaje: 'Ocurrió un error inesperado consultando el médico',
+                        errors: err
+                    })
+            }
+            if (!medico) {
+                return res.status(400).json({
+                    ok: false,
+                    mensaje: `El médico con id ${id} no existe`,
+                    errors: {
+                        message: 'Médico no encontrado'
+                    }
+                });
+            }
+            res.status(200).json({
+                ok: true,
+                medico
+            });
+        });
+
+});
+
+// =================================================
 // Guardar médicos
 // =================================================
 app.post('/', mdAutenticacion.verificaToken, (req, res) => {
